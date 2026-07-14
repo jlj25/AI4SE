@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Environment / secrets
+.env
+.env.*
+*.key
+*.pem
+
+# IDE / tool config (contains secrets)
+opencode.json
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+test-results.xml
+
+# Node (frontend)
+node_modules/
+web/dist/
+
+# Database
+*.db
+*.sqlite3
+
+# Keyring data
+keyring_data/
