@@ -36,6 +36,7 @@ def test_feedback_signal():
         details={"count": 2},
     )
     assert signal.type == FeedbackType.FAILURE
+    assert signal.message == "2 tests failed"
     assert signal.details == {"count": 2}
 
 
