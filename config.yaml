@@ -1,0 +1,25 @@
+agent:
+  max_steps: 50
+scope:
+  allowed_dirs: ["./src", "./tests"]
+  protected_patterns: [".git/", ".env", "*.key"]
+danger_rules:
+  - name: recursive_force_delete_root
+    pattern: 'rm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?-rf?\s+/'
+    level: dangerous
+    description: 递归强制删除根目录
+  - name: force_push
+    pattern: 'git\s+push.*--force'
+    level: dangerous
+    description: 强制推送覆盖远程历史
+  - name: curl_pipe_bash
+    pattern: 'curl.*\|\s*(ba)?sh'
+    level: dangerous
+    description: 远程脚本直接执行
+  - name: install_package
+    pattern: '(pip|npm|yarn)\s+install'
+    level: warning
+    description: 安装软件包
+llm:
+  model: "glm-5.2"
+  base_url: "https://njusehub.info/v1"
