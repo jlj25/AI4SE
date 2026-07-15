@@ -1,6 +1,12 @@
 """核心数据类型的测试。"""
 
-from src.types import Action, FeedbackSignal, Message, ToolResult
+from src.types import (
+    Action,
+    FeedbackSignal,
+    FeedbackType,
+    Message,
+    ToolResult,
+)
 
 
 def test_action_creation():
@@ -24,12 +30,22 @@ def test_tool_result_failure():
 
 
 def test_feedback_signal():
-    signal = FeedbackSignal(success=False, message="2 tests failed", details={"count": 2})
-    assert signal.success is False
+    signal = FeedbackSignal(
+        type=FeedbackType.FAILURE,
+        message="2 tests failed",
+        details={"count": 2},
+    )
+    assert signal.type == FeedbackType.FAILURE
     assert signal.details == {"count": 2}
 
 
-def test_message_roles():
+def test_message_with_feedback():
     msg = Message(role="user", content="修复 bug")
     assert msg.role == "user"
     assert msg.content == "修复 bug"
+    assert msg.feedback is None
+
+    signal = FeedbackSignal(type=FeedbackType.SUCCESS, message="通过")
+    msg2 = Message(role="tool", content="输出", feedback=signal)
+    assert msg2.feedback is not None
+    assert msg2.feedback.type == FeedbackType.SUCCESS
