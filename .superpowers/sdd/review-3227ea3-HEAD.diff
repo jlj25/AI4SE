@@ -1,0 +1,190 @@
+## Commits (3227ea3..HEAD)
+
+3983708 fix: 补充 FeedbackType 枚举 + Message.feedback 字段（解决跨 Task 类型冲突）
+624bca4 feat: 项目脚手架 + 核心类型 (Action/ToolResult/FeedbackSignal/Message)
+
+## Stat
+
+ pyproject.toml      | 43 +++++++++++++++++++++++++++++++++++++++++++
+ src/__init__.py     |  1 +
+ src/types.py        | 52 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ tests/__init__.py   |  0
+ tests/test_types.py | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 147 insertions(+)
+
+## Full Diff
+
+diff --git a/pyproject.toml b/pyproject.toml
+new file mode 100644
+index 0000000..4bb7596
+--- /dev/null
++++ b/pyproject.toml
+@@ -0,0 +1,43 @@
++[project]
++name = "njuse-coding-agent"
++version = "0.1.0"
++description = "Coding Agent Harness with governance-focused deep dimension"
++requires-python = ">=3.12"
++dependencies = [
++    "fastapi>=0.115.0",
++    "uvicorn>=0.32.0",
++    "httpx>=0.28.0",
++    "keyring>=25.0.0",
++    "pyyaml>=6.0",
++    "websockets>=14.0",
++]
++
++[project.optional-dependencies]
++dev = [
++    "pytest>=8.0.0",
++    "pytest-asyncio>=0.24.0",
++    "ruff>=0.8.0",
++    "mypy>=1.13.0",
++]
++
++[tool.ruff]
++line-length = 100
++target-version = "py312"
++
++[tool.ruff.lint]
++select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
++
++[tool.mypy]
++python_version = "3.12"
++strict = true
++
++[tool.pytest.ini_options]
++asyncio_mode = "auto"
++testpaths = ["tests"]
++
++[build-system]
++requires = ["hatchling"]
++build-backend = "hatchling.build"
++
++[tool.hatch.build.targets.wheel]
++packages = ["src"]
+diff --git a/src/__init__.py b/src/__init__.py
+new file mode 100644
+index 0000000..28728f4
+--- /dev/null
++++ b/src/__init__.py
+@@ -0,0 +1 @@
++"""NJUSE Coding Agent Harness 内核。"""
+diff --git a/src/types.py b/src/types.py
+new file mode 100644
+index 0000000..af87f65
+--- /dev/null
++++ b/src/types.py
+@@ -0,0 +1,52 @@
++"""核心数据类型定义。"""
++
++from __future__ import annotations
++
++from dataclasses import dataclass, field
++from enum import Enum
++from typing import Any
++
++
++class FeedbackType(Enum):
++    """反馈信号类型。"""
++
++    SUCCESS = "success"
++    FAILURE = "failure"
++    INFO = "info"
++
++
++@dataclass
++class FeedbackSignal:
++    """反馈闭环的客观信号。"""
++
++    type: FeedbackType
++    message: str = ""
++    details: dict[str, Any] = field(default_factory=dict)
++
++
++@dataclass
++class Message:
++    """LLM 对话消息。"""
++
++    role: str  # "system" | "user" | "assistant" | "tool"
++    content: str
++    feedback: FeedbackSignal | None = None
++
++
++@dataclass
++class Action:
++    """agent 解析出的动作。"""
++
++    tool: str
++    args: dict[str, Any]
++    thought: str
++
++
++@dataclass
++class ToolResult:
++    """工具执行结果。"""
++
++    success: bool
++    stdout: str = ""
++    stderr: str = ""
++    exit_code: int = 0
+diff --git a/tests/__init__.py b/tests/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/tests/test_types.py b/tests/test_types.py
+new file mode 100644
+index 0000000..1cfbc11
+--- /dev/null
++++ b/tests/test_types.py
+@@ -0,0 +1,51 @@
++"""核心数据类型的测试。"""
++
++from src.types import (
++    Action,
++    FeedbackSignal,
++    FeedbackType,
++    Message,
++    ToolResult,
++)
++
++
++def test_action_creation():
++    action = Action(tool="read_file", args={"path": "src/main.py"}, thought="读取主文件")
++    assert action.tool == "read_file"
++    assert action.args == {"path": "src/main.py"}
++    assert action.thought == "读取主文件"
++
++
++def test_tool_result_success():
++    result = ToolResult(success=True, stdout="hello", stderr="", exit_code=0)
++    assert result.success is True
++    assert result.stdout == "hello"
++    assert result.exit_code == 0
++
++
++def test_tool_result_failure():
++    result = ToolResult(success=False, stdout="", stderr="not found", exit_code=1)
++    assert result.success is False
++    assert result.stderr == "not found"
++
++
++def test_feedback_signal():
++    signal = FeedbackSignal(
++        type=FeedbackType.FAILURE,
++        message="2 tests failed",
++        details={"count": 2},
++    )
++    assert signal.type == FeedbackType.FAILURE
++    assert signal.details == {"count": 2}
++
++
++def test_message_with_feedback():
++    msg = Message(role="user", content="修复 bug")
++    assert msg.role == "user"
++    assert msg.content == "修复 bug"
++    assert msg.feedback is None
++
++    signal = FeedbackSignal(type=FeedbackType.SUCCESS, message="通过")
++    msg2 = Message(role="tool", content="输出", feedback=signal)
++    assert msg2.feedback is not None
++    assert msg2.feedback.type == FeedbackType.SUCCESS

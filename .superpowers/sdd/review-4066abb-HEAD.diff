@@ -1,0 +1,106 @@
+## Commits (4066abb..HEAD)
+
+68005b8 feat: LLM 抽象层 + MockLLMClient（按脚本返回，可断言调用历史）
+
+## Stat
+
+ src/llm/__init__.py           |  1 +
+ src/llm/base.py               | 15 +++++++++++++++
+ src/llm/mock_client.py        | 22 ++++++++++++++++++++++
+ tests/llm/__init__.py         |  0
+ tests/llm/test_mock_client.py | 26 ++++++++++++++++++++++++++
+ 5 files changed, 64 insertions(+)
+
+## Full Diff
+
+diff --git a/src/llm/__init__.py b/src/llm/__init__.py
+new file mode 100644
+index 0000000..2dbd2b5
+--- /dev/null
++++ b/src/llm/__init__.py
+@@ -0,0 +1 @@
++"""LLM 抽象层。"""
+diff --git a/src/llm/base.py b/src/llm/base.py
+new file mode 100644
+index 0000000..4a4d7d5
+--- /dev/null
++++ b/src/llm/base.py
+@@ -0,0 +1,15 @@
++"""LLM 客户端抽象基类。"""
++from __future__ import annotations
++
++from abc import ABC, abstractmethod
++
++from src.types import Message
++
++
++class LLMClient(ABC):
++    """可注入 mock 的 LLM 抽象层。"""
++
++    @abstractmethod
++    def chat(self, messages: list[Message]) -> str:
++        """发送对话消息，返回 LLM 响应字符串。"""
++        ...
+diff --git a/src/llm/mock_client.py b/src/llm/mock_client.py
+new file mode 100644
+index 0000000..907241e
+--- /dev/null
++++ b/src/llm/mock_client.py
+@@ -0,0 +1,22 @@
++"""MockLLMClient：按脚本返回预设响应，用于离线单测。"""
++from __future__ import annotations
++
++from src.llm.base import LLMClient
++from src.types import Message
++
++
++class MockLLMClient(LLMClient):
++    """按脚本逐条返回预设响应的 mock LLM。"""
++
++    def __init__(self, script: list[str]) -> None:
++        self._script = script
++        self._index = 0
++        self.call_history: list[list[Message]] = []
++
++    def chat(self, messages: list[Message]) -> str:
++        self.call_history.append(messages)
++        if self._index >= len(self._script):
++            raise IndexError(f"脚本耗尽：已返回 {self._index} 条，无更多预设响应")
++        response = self._script[self._index]
++        self._index += 1
++        return response
+diff --git a/tests/llm/__init__.py b/tests/llm/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/tests/llm/test_mock_client.py b/tests/llm/test_mock_client.py
+new file mode 100644
+index 0000000..e305c74
+--- /dev/null
++++ b/tests/llm/test_mock_client.py
+@@ -0,0 +1,26 @@
++"""MockLLMClient 单测：验证按脚本返回预设响应。"""
++from src.llm.mock_client import MockLLMClient
++from src.types import Message
++
++
++def test_mock_returns_scripted_response():
++    client = MockLLMClient(script=["第一个响应", "第二个响应"])
++    msg = [Message(role="user", content="任务")]
++    assert client.chat(msg) == "第一个响应"
++    assert client.chat(msg) == "第二个响应"
++
++
++def test_mock_raises_when_script_exhausted():
++    import pytest
++    client = MockLLMClient(script=["仅一条"])
++    client.chat([Message(role="user", content="")])
++    with pytest.raises(IndexError, match="脚本耗尽"):
++        client.chat([Message(role="user", content="")])
++
++
++def test_mock_records_call_history():
++    client = MockLLMClient(script=["resp"])
++    msgs = [Message(role="user", content="hello")]
++    client.chat(msgs)
++    assert len(client.call_history) == 1
++    assert client.call_history[0] == msgs

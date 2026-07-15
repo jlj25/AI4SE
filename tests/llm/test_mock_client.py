@@ -1,5 +1,5 @@
 """MockLLMClient 单测：验证按脚本返回预设响应。"""
-from src.llm.mock_client import MockLLMClient
+from src.llm.mock import MockLLMClient
 from src.types import Message
 
 
