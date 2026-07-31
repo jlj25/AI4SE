@@ -11,3 +11,4 @@ Task 8: complete (commits 6dfd035..3006bec, self-implemented — adapted brief: 
 Task 9: complete (commits 3006bec..6789507, self-implemented — adapted brief: ToolResult stdout/stderr not output/error; added no-validators-info + multi-validator-failure-wins tests)
 Task 10: complete (commits 6789507..da0cb9a, self-implemented — no field conflicts; added latest-first + all_messages tests)
 Task 11: complete (commits da0cb9a..7e263b9, self-implemented — added python-dotenv dep; added model-default/model-env/llm-fallback tests)
+Task 12: complete (commits 7e263b9..670e936, self-implemented — no field conflicts; added empty-tool/non-dict/instance-type tests)
