@@ -13,3 +13,4 @@ Task 10: complete (commits 6789507..da0cb9a, self-implemented — no field confl
 Task 11: complete (commits da0cb9a..7e263b9, self-implemented — added python-dotenv dep; added model-default/model-env/llm-fallback tests)
 Task 12: complete (commits 7e263b9..670e936, self-implemented — no field conflicts; added empty-tool/non-dict/instance-type tests)
 Task 13: complete (commits 670e936..ea94bb1, self-implemented — adapted brief: LLMClient.chat takes list[Message] not str, MockLLMClient uses script= not responses=, ToolResult stdout/stderr not output/error, Windows path backslash JSON escaping fixed with json.dumps, _make_agent accepts custom allowed_dirs for tmp_path tests)
+Task 14: complete (commits ea94bb1..80ceb81, self-implemented — added type annotations for mypy strict, fixed dict(object) type error with isinstance check, added pending-gate approve/deny/modify + websocket tests)
