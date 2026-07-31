@@ -10,3 +10,4 @@ Task 7: complete (commits aab8d30..6dfd035, self-implemented — subagent aborte
 Task 8: complete (commits 6dfd035..3006bec, self-implemented — adapted brief: ToolResult uses stdout/stderr/exit_code not output/error; added dispatch-exception-caught test)
 Task 9: complete (commits 3006bec..6789507, self-implemented — adapted brief: ToolResult stdout/stderr not output/error; added no-validators-info + multi-validator-failure-wins tests)
 Task 10: complete (commits 6789507..da0cb9a, self-implemented — no field conflicts; added latest-first + all_messages tests)
+Task 11: complete (commits da0cb9a..7e263b9, self-implemented — added python-dotenv dep; added model-default/model-env/llm-fallback tests)
