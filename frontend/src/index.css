@@ -1,0 +1,125 @@
+:root {
+  --bg: #1a1b26;
+  --fg: #c0caf5;
+  --accent: #7aa2f7;
+  --danger: #f7768e;
+  --success: #9ece6a;
+  --warning: #e0af68;
+  --border: #414868;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.app header h1 {
+  font-size: 1.5rem;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+.chat-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.msg {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  max-width: 80%;
+}
+
+.msg-user { background: var(--accent); color: var(--bg); align-self: flex-end; }
+.msg-assistant { background: var(--border); align-self: flex-start; }
+.msg-tool { background: var(--warning); color: var(--bg); align-self: flex-start; font-size: 0.85rem; }
+
+.input-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.input-bar input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.input-bar button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: var(--accent);
+  color: var(--bg);
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.approval-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.approval-dialog {
+  background: var(--bg);
+  border: 1px solid var(--danger);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  max-width: 500px;
+  width: 90%;
+}
+
+.approval-dialog h3 {
+  color: var(--danger);
+  margin-bottom: 1rem;
+}
+
+.approval-dialog p {
+  margin-bottom: 0.5rem;
+}
+
+.approval-dialog .buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.btn-approve { background: var(--success); color: var(--bg); }
+.btn-deny { background: var(--danger); color: var(--bg); }
+.btn-modify { background: var(--warning); color: var(--bg); }
+
+.approval-dialog button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-weight: bold;
+  flex: 1;
+}
