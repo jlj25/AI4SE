@@ -1,0 +1,10 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+.env
+*.key
+node_modules
+frontend/node_modules
+.venv
+.superpowers

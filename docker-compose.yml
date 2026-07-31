@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  agent:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.njusehub.ai/v1}
+      - LLM_MODEL=${LLM_MODEL:-njusehub/glm-5.2}
+    volumes:
+      - ./config:/app/config:ro

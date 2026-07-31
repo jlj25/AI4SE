@@ -1,0 +1,16 @@
+stages:
+  - test
+
+unit-test:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - pip install uv
+    - uv sync --frozen --extra dev
+  script:
+    - uv run ruff check .
+    - uv run mypy .
+    - uv run pytest -xvs
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
