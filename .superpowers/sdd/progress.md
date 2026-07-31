@@ -16,3 +16,4 @@ Task 13: complete (commits 670e936..ea94bb1, self-implemented — adapted brief:
 Task 14: complete (commits ea94bb1..80ceb81, self-implemented — added type annotations for mypy strict, fixed dict(object) type error with isinstance check, added pending-gate approve/deny/modify + websocket tests)
 Task 15: complete (commits 80ceb81..3d43c6e, self-implemented — hand-written all frontend files instead of npm create vite, added TypeScript strict types, Tokyo Night CSS theme, npm build verified 88 modules 4.92s)
 Task 16: complete (commits 3d43c6e..35a1414, self-implemented — fixed Dockerfile: named stages, uv installed in final stage, dev deps for test; Docker daemon not running, build not verified)
+Task 17: complete (commits 35a1414..78b0cf7, self-implemented — adapted brief: MockLLMClient script= not responses=, json.dumps for Windows paths, added hitl-approve-flow + write-then-list + shell-echo tests, mypy excludes tests/demo)
