@@ -53,14 +53,23 @@ class HITLGate:
         if classification.level != DangerLevel.DANGEROUS:
             return action
         self.request_approval(action, classification)
+        return self._apply_decision()
+
+    def _apply_decision(self) -> Action | None:
+        """应用当前已接收的决策，返回最终动作或 None（拒绝/无决策）。
+
+        fail-closed：若无决策可用，直接判 DENIED 并返回 None。
+        可独立于 gate 调用以测试 approve/modify/deny 路径。
+        """
         if self._decision is None:
             self._state = HITLState.DENIED
             return None
         if self._decision.verdict == "deny":
             return None
-        if self._decision.verdict == "modify" and self._decision.modified_action is not None:
+        if self._decision.verdict == "modify":
             return self._decision.modified_action
-        return action
+        # approve：放行挂起的动作
+        return self._pending_action
 
     def request_approval(self, action: Action, classification: Classification) -> None:
         """IDLE → PENDING_APPROVAL，等待用户决策。"""
@@ -77,6 +86,8 @@ class HITLGate:
         elif decision.verdict == "deny":
             self._state = HITLState.DENIED
         elif decision.verdict == "modify":
+            if decision.modified_action is None:
+                raise ValueError("modify 决策必须提供 modified_action")
             self._state = HITLState.MODIFIED
             self._pending_action = decision.modified_action
         else:
