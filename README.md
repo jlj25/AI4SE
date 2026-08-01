@@ -3,6 +3,8 @@
 > Spec-Driven, Subagent-Built, Human-Owned.
 >
 > 以**治理（Governance）为核心深度**的编码智能体工具，治理层为确定性代码，移除真实 LLM 后仍可用 Mock 单测验证。
+>
+> **线上部署**：http://116.62.78.157:8000
 
 ## 项目简介
 
@@ -87,7 +89,18 @@ npm run build    # 产物在 frontend/dist/
 
 ## 分发命令
 
-### Docker 部署
+### 线上部署（阿里云 ECS）
+
+已部署到阿里云 ECS（Ubuntu 22.04, 2核2G），裸机部署（无 Docker）：
+
+- **WebUI 地址**：http://116.62.78.157:8000
+- **健康检查**：http://116.62.78.157:8000/api/health
+- **部署方式**：Python 3.12 + Node.js 20 + uvicorn，前端静态文件由 FastAPI 托管
+- **部署架构**：FastAPI 单进程（uvicorn 单 worker），前端构建产物在 `frontend/dist/`，通过 `STATIC_DIR` 环境变量挂载
+
+部署步骤见 `deploy_baremetal.sh`。
+
+### Docker 部署（备选）
 
 ```bash
 # 构建镜像
@@ -97,13 +110,15 @@ docker build -t njuse-agent .
 docker compose up
 ```
 
-### GitLab CI
+### CI/CD
 
-推送到 `main` 分支或创建 MR 时自动运行：
+GitHub Actions（`.github/workflows/ci.yml`）：每次 push 到 main 自动运行：
 
 ```
 ruff check . → mypy . → pytest -xvs
 ```
+
+CI 执行记录：https://github.com/jlj25/AI4SE/actions
 
 ### 接入真实 LLM（可选）
 
