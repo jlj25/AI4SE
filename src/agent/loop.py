@@ -47,6 +47,8 @@ class AgentLoop:
         self._memory = memory
         self._max_iterations = max_iterations
         self._on_event = on_event
+        self._context: list[Message] = []
+        self._initialized = False
 
     def _emit(self, event: dict[str, object]) -> None:
         """发送事件回调。"""
@@ -55,13 +57,15 @@ class AgentLoop:
 
     def run(self, user_input: str) -> str:
         """运行 agent 主循环。"""
-        context: list[Message] = []
-        system_prompt = (
-            "你是一个编码助手。使用 ```tool_code 代码块执行动作。"
-            '格式：```tool_code\n{"tool": "...", "args": {...}, "thought": "..."}\n```'
-        )
-        context.append(Message(role="system", content=system_prompt))
-        context.append(Message(role="user", content=user_input))
+        if not self._initialized:
+            system_prompt = (
+                "你是一个编码助手。使用 ```tool_code 代码块执行动作。"
+                '格式：```tool_code\n{"tool": "...", "args": {...}, "thought": "..."}\n```'
+            )
+            self._context.append(Message(role="system", content=system_prompt))
+            self._initialized = True
+
+        self._context.append(Message(role="user", content=user_input))
         self._memory.store(Message(role="user", content=user_input))
 
         self._emit({"type": "task_started", "input": user_input})
@@ -69,8 +73,8 @@ class AgentLoop:
         for i in range(self._max_iterations):
             self._emit({"type": "step_started", "step": i})
 
-            response = self._llm.chat(context)
-            context.append(Message(role="assistant", content=response))
+            response = self._llm.chat(self._context)
+            self._context.append(Message(role="assistant", content=response))
             self._emit(
                 {"type": "thought", "step": i, "content": response[:500]},
             )
@@ -83,7 +87,7 @@ class AgentLoop:
                 return response
 
             for action in actions:
-                self._process_action(action, context, i)
+                self._process_action(action, self._context, i)
 
         self._emit({"type": "max_iterations_reached"})
         return f"达到最大迭代次数 {self._max_iterations}，循环终止"
