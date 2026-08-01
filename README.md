@@ -24,7 +24,7 @@ ScopeFence（范围围栏，硬拦截）→ DangerClassifier（危险分级）�
 - **DangerClassifier**：对通过围栏的动作分级（SAFE/WARNING/DANGEROUS），正则模式匹配，取最高风险等级。规则从 YAML 配置加载。
 - **HITLGate**：有限状态机，仅 DANGEROUS 时激活。**fail-closed** 语义：无决策时直接判 DENIED。
 
-所有核心机制可用 MockLLM 离线测试，无需网络或真实模型。107 个测试全通过。
+所有核心机制可用 MockLLM 离线测试，无需网络或真实模型。137 个测试全通过。
 
 ## 安装
 
@@ -50,7 +50,7 @@ npm install
 ### 测试 / Lint / 类型检查
 
 ```bash
-uv run pytest -xvs           # 全量测试（107 个）
+uv run pytest -xvs           # 全量测试（137 个）
 uv run ruff check .          # Lint
 uv run mypy .                # 类型检查
 ```
@@ -61,6 +61,33 @@ uv run mypy .                # 类型检查
 
 ```bash
 uv run python demo/run_demo.py
+```
+
+### CLI 命令行工具
+
+本项目同时提供 WebUI 和 CLI（类似 llama.cpp 同时提供 llama-cli 和 llama-server）。
+
+```bash
+# 单次任务模式
+uv run njuse-cli "帮我列出当前目录的文件"
+
+# 交互式对话模式（支持多轮对话，上下文跨轮次保留）
+uv run njuse-cli
+
+# 离线测试模式（用 MockLLM，无需 API key）
+uv run njuse-cli --mock "测试任务"
+```
+
+CLI 输出示例：
+
+```
+>>> 帮我看看当前目录有什么文件
+
+  [动作] list_dir({'path': '.'}) — 列出当前目录内容
+  [执行] 成功
+         输出: src/ tests/ docs/ ...
+  [完成] 当前目录包含 src、tests、docs 等目录。
+Agent: 当前目录包含 src、tests、docs 等目录。
 ```
 
 ### 启动后端 API
@@ -153,6 +180,7 @@ njuse/
 │   └── config.yaml              # 默认配置（危险规则、允许目录等）
 ├── src/
 │   ├── types.py                 # 核心类型（Action/ToolResult/FeedbackSignal/Message）
+│   ├── cli.py                   # CLI 入口（njuse-cli，交互式 + 单次任务）
 │   ├── agent/
 │   │   └── loop.py              # Agent 主循环
 │   ├── llm/
@@ -183,8 +211,9 @@ njuse/
 │       ├── main.py              # FastAPI 应用工厂
 │       ├── routes.py            # REST 路由（/health, /approve）
 │       └── ws.py                # WebSocket 端点
-├── tests/                       # 122 个测试
+├── tests/                       # 137 个测试
 │   ├── test_types.py
+│   ├── test_cli.py              # CLI 事件格式化与入口逻辑测试
 │   ├── test_demo.py             # DEMO1-3 集成测试
 │   ├── test_integration.py      # 端到端集成测试
 │   ├── governance/
