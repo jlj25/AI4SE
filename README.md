@@ -136,54 +136,57 @@ LLM_MODEL=njusehub/glm-5.2
 
 ```
 njuse/
-├── SPEC.md                    # 设计规范文档
-├── PLAN.md                    # 17 个 TDD Task 实现计划
-├── REFLECTION.md              # 反思报告
-├── AGENTS.md                  # 项目规范（uv/ruff/mypy/pytest 命令）
-├── pyproject.toml             # Python 项目配置
-├── uv.lock                    # 依赖锁定
-├── Dockerfile                 # 多阶段构建
-├── docker-compose.yml         # 容器编排
-├── .gitlab-ci.yml             # CI pipeline
+├── docs/                        # 项目文档
+│   ├── SPEC.md                  # 设计规范文档
+│   ├── PLAN.md                  # 17 个 TDD Task 实现计划
+│   ├── AGENT_LOG.md             # 实现过程时间线
+│   ├── REFLECTION.md            # 反思报告
+│   └── SPEC_PROCESS.md          # SPEC/PLAN 生成过程
+├── AGENTS.md                    # 项目规范（uv/ruff/mypy/pytest 命令）
+├── pyproject.toml               # Python 项目配置
+├── uv.lock                      # 依赖锁定
+├── Dockerfile                   # 多阶段构建
+├── docker-compose.yml           # 容器编排
+├── .gitlab-ci.yml               # CI pipeline
 ├── .dockerignore
 ├── config/
-│   └── config.yaml            # 默认配置（危险规则、允许目录等）
+│   └── config.yaml              # 默认配置（危险规则、允许目录等）
 ├── src/
-│   ├── types.py               # 核心类型（Action/ToolResult/FeedbackSignal/Message）
+│   ├── types.py                 # 核心类型（Action/ToolResult/FeedbackSignal/Message）
 │   ├── agent/
-│   │   └── loop.py            # Agent 主循环
+│   │   └── loop.py              # Agent 主循环
 │   ├── llm/
-│   │   ├── base.py            # LLMClient ABC
-│   │   └── mock.py            # MockLLMClient（离线测试用）
+│   │   ├── base.py              # LLMClient ABC
+│   │   └── mock.py              # MockLLMClient（离线测试用）
 │   ├── parser/
-│   │   └── action_parser.py   # tool_code 代码块解析
-│   ├── governance/            # 治理管道（深度维度）
-│   │   ├── scope.py           # ScopeFence（范围围栏）
-│   │   ├── classifier.py      # DangerClassifier（危险分级）
-│   │   ├── hitl.py            # HITLGate（人工审批门）
-│   │   └── pipeline.py        # GovernancePipeline（三阶段串联）
+│   │   └── action_parser.py     # tool_code 代码块解析
+│   ├── governance/              # 治理管道（深度维度）
+│   │   ├── scope.py             # ScopeFence（范围围栏）
+│   │   ├── classifier.py        # DangerClassifier（危险分级）
+│   │   ├── hitl.py              # HITLGate（人工审批门）
+│   │   └── pipeline.py          # GovernancePipeline（三阶段串联）
 │   ├── tools/
-│   │   ├── base.py            # Tool ABC
-│   │   ├── dispatcher.py      # ToolDispatcher
-│   │   ├── fs.py              # ReadFile/WriteFile/ListDir 工具
-│   │   └── shell.py           # ShellTool
+│   │   ├── base.py              # Tool ABC
+│   │   ├── dispatcher.py        # ToolDispatcher
+│   │   ├── fs.py                # ReadFile/WriteFile/ListDir 工具
+│   │   └── shell.py             # ShellTool
 │   ├── feedback/
-│   │   ├── validators.py      # Validator ABC + ExitCode/OutputContains 验证器
-│   │   └── loop.py            # FeedbackLoop（信号注入上下文）
+│   │   ├── validators.py        # Validator ABC + ExitCode/OutputContains 验证器
+│   │   └── loop.py              # FeedbackLoop（信号注入上下文）
 │   ├── memory/
-│   │   └── store.py           # MemoryStore（关键词选择性检索）
+│   │   └── store.py             # MemoryStore（关键词选择性检索）
 │   ├── credentials/
-│   │   └── manager.py         # CredentialManager（环境变量 + .env）
+│   │   └── manager.py           # CredentialManager（环境变量 + .env）
 │   ├── config/
-│   │   └── loader.py          # ConfigLoader（YAML 配置加载）
+│   │   └── loader.py            # ConfigLoader（YAML 配置加载）
 │   └── api/
-│       ├── main.py            # FastAPI 应用工厂
-│       ├── routes.py          # REST 路由（/health, /approve）
-│       └── ws.py              # WebSocket 端点
-├── tests/                     # 107 个测试
+│       ├── main.py              # FastAPI 应用工厂
+│       ├── routes.py            # REST 路由（/health, /approve）
+│       └── ws.py                # WebSocket 端点
+├── tests/                       # 122 个测试
 │   ├── test_types.py
-│   ├── test_demo.py           # DEMO1-3 集成测试
-│   ├── test_integration.py    # 端到端集成测试
+│   ├── test_demo.py             # DEMO1-3 集成测试
+│   ├── test_integration.py      # 端到端集成测试
 │   ├── governance/
 │   ├── tools/
 │   ├── feedback/
@@ -194,7 +197,7 @@ njuse/
 │   ├── parser/
 │   ├── agent/
 │   └── api/
-├── frontend/                  # React + Vite + TypeScript
+├── frontend/                    # React + Vite + TypeScript
 │   ├── src/
 │   │   ├── App.tsx
 │   │   ├── api.ts
@@ -206,7 +209,7 @@ njuse/
 │   ├── package.json
 │   └── vite.config.ts
 └── demo/
-    └── run_demo.py            # 演示脚本
+    └── run_demo.py              # 演示脚本
 ```
 
 ## 安全边界说明
