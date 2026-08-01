@@ -17,7 +17,7 @@ export function ChatView() {
       if (msg.type === 'status' && msg.message) {
         setMessages((prev) => [...prev, { role: 'system', content: msg.message! }])
       } else if (msg.type === 'thought') {
-        setMessages((prev) => [...prev, { role: 'assistant', content: msg.content || '' }])
+        setMessages((prev) => [...prev, { role: 'assistant', content: '思考中...' }])
       } else if (msg.type === 'action_parsed') {
         const action = msg.action
         if (action) {

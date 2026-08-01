@@ -49,13 +49,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 ) -> None:
                     try:
                         agent = create_agent(on_event=on_event)
-                        result = agent.run(_task)
-                        asyncio.run_coroutine_threadsafe(
-                            websocket.send_json(
-                                {"type": "task_completed", "response": result[:1000]}
-                            ),
-                            _loop,
-                        )
+                        agent.run(_task)
                     except Exception as e:
                         asyncio.run_coroutine_threadsafe(
                             websocket.send_json(
