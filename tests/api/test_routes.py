@@ -86,7 +86,7 @@ def test_websocket_run():
     app = create_app()
     client = TestClient(app)
     with client.websocket_connect("/ws") as ws:
-        ws.send_text('{"type": "run"}')
+        ws.send_text('{"type": "run", "input": "test task"}')
         msg = ws.receive_json()
         assert msg["type"] == "status"
-        assert "agent" in msg["message"]
+        assert "任务" in msg["message"]

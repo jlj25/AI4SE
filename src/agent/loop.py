@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from src.feedback.loop import FeedbackLoop
 from src.governance.pipeline import GovernancePipeline
 from src.llm.base import LLMClient
@@ -9,6 +11,8 @@ from src.memory.store import MemoryStore
 from src.parser.action_parser import ActionParser
 from src.tools.dispatcher import ToolDispatcher
 from src.types import Action, Message, ToolResult
+
+EventCallback = Callable[[dict[str, object]], None]
 
 
 class AgentLoop:
@@ -33,6 +37,7 @@ class AgentLoop:
         feedback: FeedbackLoop,
         memory: MemoryStore,
         max_iterations: int = 10,
+        on_event: EventCallback | None = None,
     ) -> None:
         self._llm = llm
         self._parser = parser
@@ -41,6 +46,12 @@ class AgentLoop:
         self._feedback = feedback
         self._memory = memory
         self._max_iterations = max_iterations
+        self._on_event = on_event
+
+    def _emit(self, event: dict[str, object]) -> None:
+        """发送事件回调。"""
+        if self._on_event:
+            self._on_event(event)
 
     def run(self, user_input: str) -> str:
         """运行 agent 主循环。"""
@@ -53,22 +64,54 @@ class AgentLoop:
         context.append(Message(role="user", content=user_input))
         self._memory.store(Message(role="user", content=user_input))
 
-        for _i in range(self._max_iterations):
+        self._emit({"type": "task_started", "input": user_input})
+
+        for i in range(self._max_iterations):
+            self._emit({"type": "step_started", "step": i})
+
             response = self._llm.chat(context)
             context.append(Message(role="assistant", content=response))
+            self._emit(
+                {"type": "thought", "step": i, "content": response[:500]},
+            )
 
             actions = self._parser.parse(response)
             if not actions:
+                self._emit(
+                    {"type": "task_completed", "response": response},
+                )
                 return response
 
             for action in actions:
-                self._process_action(action, context)
+                self._process_action(action, context, i)
 
+        self._emit({"type": "max_iterations_reached"})
         return f"达到最大迭代次数 {self._max_iterations}，循环终止"
 
-    def _process_action(self, action: Action, context: list[Message]) -> None:
+    def _process_action(
+        self, action: Action, context: list[Message], step: int
+    ) -> None:
         """处理单个动作：治理 → 执行 → 反馈。"""
+        self._emit(
+            {
+                "type": "action_parsed",
+                "step": step,
+                "tool": action.tool,
+                "args": action.args,
+                "thought": action.thought,
+            },
+        )
+
         gov_result = self._pipeline.process(action)
+        self._emit(
+            {
+                "type": "governance_check",
+                "step": step,
+                "blocked": gov_result.blocked,
+                "reason": gov_result.reason,
+            },
+        )
+
         if gov_result.blocked:
             blocked_result = ToolResult(
                 success=False,
@@ -76,11 +119,29 @@ class AgentLoop:
                 exit_code=1,
             )
             self._feedback.process(action, blocked_result, context)
+            self._emit(
+                {
+                    "type": "action_blocked",
+                    "step": step,
+                    "reason": gov_result.reason,
+                },
+            )
             return
         if gov_result.action is None:
             return
-        tool_result = self._dispatcher.dispatch(gov_result.action)
-        self._feedback.process(gov_result.action, tool_result, context)
+
+        final_action = gov_result.action
+        tool_result = self._dispatcher.dispatch(final_action)
+        self._emit(
+            {
+                "type": "action_executed",
+                "step": step,
+                "success": tool_result.success,
+                "stdout": tool_result.stdout[:500],
+                "stderr": tool_result.stderr[:500] if tool_result.stderr else "",
+            },
+        )
+        self._feedback.process(final_action, tool_result, context)
         self._memory.store(
             Message(role="tool", content=tool_result.stdout),
         )
