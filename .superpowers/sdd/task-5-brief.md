@@ -1,0 +1,159 @@
+## Task 5: 危险分类器 DangerClassifier（治理深度 · 2/4）
+
+**Files:**
+- Create: `src/governance/classifier.py`
+- Test: `tests/governance/test_classifier.py`
+
+**Interfaces:**
+- Consumes: `Action` from `src/types.py`, `DangerRule` from `src/config/loader.py`
+- Produces: `DangerLevel(Enum)`, `Classification(level, matched_rule, reason)`, `DangerClassifier.classify(action) -> Classification`
+
+- [ ] **Step 1: 写失败测试**
+
+```python
+# tests/governance/test_classifier.py
+"""DangerClassifier 单测：验证危险命令模式匹配与风险分级。"""
+from src.types import Action
+from src.config.loader import DangerRule
+from src.governance.classifier import DangerClassifier, DangerLevel
+
+
+def _make_rules() -> list[DangerRule]:
+    return [
+        DangerRule(name="force_delete", pattern=r"rm\s+(-\w*\w\w*\s+)?-rf?\s+/", level="dangerous", description="递归删除"),
+        DangerRule(name="force_push", pattern=r"git\s+push.*--force", level="dangerous", description="强制推送"),
+        DangerRule(name="install_pkg", pattern=r"(pip|npm)\s+install", level="warning", description="安装包"),
+    ]
+
+
+def test_dangerous_rm_rf():
+    classifier = DangerClassifier(_make_rules())
+    action = Action(tool="run_shell", args={"command": "rm -rf /"}, thought="")
+    result = classifier.classify(action)
+    assert result.level == DangerLevel.DANGEROUS
+    assert result.matched_rule == "force_delete"
+
+
+def test_dangerous_git_force_push():
+    classifier = DangerClassifier(_make_rules())
+    action = Action(tool="run_shell", args={"command": "git push --force origin main"}, thought="")
+    result = classifier.classify(action)
+    assert result.level == DangerLevel.DANGEROUS
+    assert result.matched_rule == "force_push"
+
+
+def test_warning_pip_install():
+    classifier = DangerClassifier(_make_rules())
+    action = Action(tool="run_shell", args={"command": "pip install requests"}, thought="")
+    result = classifier.classify(action)
+    assert result.level == DangerLevel.WARNING
+    assert result.matched_rule == "install_pkg"
+
+
+def test_safe_command():
+    classifier = DangerClassifier(_make_rules())
+    action = Action(tool="run_shell", args={"command": "ls -la"}, thought="")
+    result = classifier.classify(action)
+    assert result.level == DangerLevel.SAFE
+    assert result.matched_rule is None
+
+
+def test_safe_file_read():
+    classifier = DangerClassifier(_make_rules())
+    action = Action(tool="read_file", args={"path": "src/main.py"}, thought="")
+    result = classifier.classify(action)
+    assert result.level == DangerLevel.SAFE
+
+
+def test_highest_level_wins():
+    """多条规则命中时取最高风险等级。"""
+    rules = [
+        DangerRule(name="warn1", pattern=r"rm", level="warning", description=""),
+        DangerRule(name="danger1", pattern=r"rm\s+-rf", level="dangerous", description=""),
+    ]
+    classifier = DangerClassifier(rules)
+    action = Action(tool="run_shell", args={"command": "rm -rf /tmp"}, thought="")
+    result = classifier.classify(action)
+    assert result.level == DangerLevel.DANGEROUS
+```
+
+- [ ] **Step 2: 运行测试验证失败**
+
+Run: `uv run pytest tests/governance/test_classifier.py -v`
+Expected: FAIL with `ModuleNotFoundError`
+
+- [ ] **Step 3: 实现 DangerClassifier**
+
+```python
+# src/governance/classifier.py
+"""危险分类学：对动作进行风险分级，代码拦截而非提示词。"""
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from enum import Enum
+
+from src.config.loader import DangerRule
+from src.types import Action
+
+
+class DangerLevel(Enum):
+    """风险等级。"""
+    SAFE = "safe"
+    WARNING = "warning"
+    DANGEROUS = "dangerous"
+
+
+_LEVEL_PRIORITY = {
+    DangerLevel.SAFE: 0,
+    DangerLevel.WARNING: 1,
+    DangerLevel.DANGEROUS: 2,
+}
+
+
+@dataclass
+class Classification:
+    """危险分类结果。"""
+    level: DangerLevel
+    matched_rule: str | None
+    reason: str
+
+
+class DangerClassifier:
+    """对通过范围围栏的动作进行风险分级。
+
+    遍历规则做命令模式匹配（正则），取最高风险等级。
+    无命中则默认 SAFE。这是确定性代码，无需 LLM。
+    """
+
+    def __init__(self, rules: list[DangerRule]) -> None:
+        self._rules = rules
+
+    def classify(self, action: Action) -> Classification:
+        """对动作进行危险分类。"""
+        if action.tool != "run_shell":
+            return Classification(level=DangerLevel.SAFE, matched_rule=None, reason="非 shell 命令")
+        command = action.args.get("command", "")
+        best_level = DangerLevel.SAFE
+        best_rule: str | None = None
+        best_reason = "无危险规则命中"
+        for rule in self._rules:
+            if re.search(rule.pattern, command):
+                rule_level = DangerLevel(rule.level)
+                if _LEVEL_PRIORITY[rule_level] > _LEVEL_PRIORITY[best_level]:
+                    best_level = rule_level
+                    best_rule = rule.name
+                    best_reason = rule.description
+        return Classification(level=best_level, matched_rule=best_rule, reason=best_reason)
+```
+
+- [ ] **Step 4: 运行测试验证通过 + lint + 提交**
+
+```bash
+uv run pytest tests/governance/test_classifier.py -v
+uv run ruff check src/governance/classifier.py tests/governance/test_classifier.py && uv run mypy src/governance/classifier.py
+git add src/governance/classifier.py tests/governance/test_classifier.py
+git commit -m "feat: 危险分类器 DangerClassifier（正则模式匹配/风险分级/最高等级优先）"
+```
+
+---
