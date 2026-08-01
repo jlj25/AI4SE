@@ -39,3 +39,9 @@ web/dist/
 
 # Keyring data
 keyring_data/
+
+# Deploy artifacts
+deploy*.tar.gz
+
+# Obsidian
+.obsidian/
