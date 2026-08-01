@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: njuse-coding-agent
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: STATIC_DIR
+        value: static

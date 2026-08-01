@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from src.api.routes import router
 from src.api.ws import ws_router
@@ -20,4 +23,9 @@ def create_app() -> FastAPI:
     )
     app.include_router(router, prefix="/api")
     app.include_router(ws_router)
+
+    static_dir = os.environ.get("STATIC_DIR", "static")
+    if os.path.isdir(static_dir):
+        app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+
     return app
