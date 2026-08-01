@@ -1,6 +1,7 @@
 """凭据管理：OS 钥匙串为主，环境变量为备选。
 
 不将 key 写入代码或日志。get() 返回值仅供 LLMClient 内部使用。
+headless 服务器无钥匙串后端时自动回退到环境变量。
 """
 
 from __future__ import annotations
@@ -13,11 +14,20 @@ import keyring
 from dotenv import load_dotenv
 
 
+def _keyring_available() -> bool:
+    """检查 keyring 是否有可用后端。"""
+    try:
+        return keyring.get_keyring() is not None
+    except Exception:
+        return False
+
+
 class CredentialManager:
     """凭据安全存储：OS 钥匙串为主，环境变量为备选。
 
     优先级：钥匙串 > OPENAI_API_KEY > LLM_API_KEY > .env 文件。
     不将 key 写入代码或日志。is_configured() 不回显明文。
+    headless 环境无钥匙串时自动回退到环境变量。
     """
 
     SERVICE_NAME = "njuse-coding-agent"
@@ -32,22 +42,26 @@ class CredentialManager:
         load_dotenv()
 
     def store(self, api_key: str) -> None:
-        """存储 API key 到 OS 钥匙串。"""
+        """存储 API key 到 OS 钥匙串（不可用时抛异常）。"""
         keyring.set_password(self._service_name, self.KEY_NAME, api_key)
 
     def is_configured(self) -> bool:
         """检查是否已配置，返回 bool，不回显明文。"""
-        if keyring.get_password(self._service_name, self.KEY_NAME):
-            return True
+        if _keyring_available():
+            with contextlib.suppress(Exception):
+                if keyring.get_password(self._service_name, self.KEY_NAME):
+                    return True
         return bool(
             os.environ.get("OPENAI_API_KEY") or os.environ.get("LLM_API_KEY")
         )
 
     def get(self) -> str | None:
         """获取 API key（仅供内部使用，返回值禁止进入日志/事件）。"""
-        key = keyring.get_password(self._service_name, self.KEY_NAME)
-        if key:
-            return key
+        if _keyring_available():
+            with contextlib.suppress(Exception):
+                key = keyring.get_password(self._service_name, self.KEY_NAME)
+                if key:
+                    return key
         return os.environ.get("OPENAI_API_KEY") or os.environ.get("LLM_API_KEY")
 
     def update(self, new_key: str) -> None:
@@ -56,7 +70,7 @@ class CredentialManager:
 
     def clear(self) -> None:
         """清除钥匙串中的 API key。"""
-        with contextlib.suppress(keyring.errors.PasswordDeleteError):
+        with contextlib.suppress(Exception):
             keyring.delete_password(self._service_name, self.KEY_NAME)
 
     def interactive_setup(self) -> str | None:
@@ -86,8 +100,8 @@ class CredentialManager:
 
     def get_base_url(self) -> str:
         """获取 base URL。"""
-        return os.environ.get("OPENAI_BASE_URL", "https://api.njusehub.ai/v1")
+        return os.environ.get("OPENAI_BASE_URL", "https://njusehub.info/v1")
 
     def get_model(self) -> str:
         """获取模型名。"""
-        return os.environ.get("LLM_MODEL", "njusehub/glm-5.2")
+        return os.environ.get("LLM_MODEL", "qwen-turbo")

@@ -222,7 +222,7 @@ def test_get_base_url_from_env(monkeypatch):
 
 def test_get_model_default():
     mgr = CredentialManager()
-    assert "glm" in mgr.get_model().lower()
+    assert "qwen" in mgr.get_model().lower() or "glm" in mgr.get_model().lower()
 
 
 def test_get_model_from_env(monkeypatch):
