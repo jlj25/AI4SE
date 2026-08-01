@@ -11,12 +11,19 @@ def _tool_code(action_dict: dict) -> str:
 
 
 def test_format_event_thought():
-    """thought 事件格式化为 [思考] 前缀。"""
-    event = {"type": "thought", "step": 0, "content": "我在思考"}
+    """thought 事件含 tool_code 时格式化为 [思考] 前缀。"""
+    content = "```tool_code\n{\"tool\": \"list_dir\"}\n```"
+    event = {"type": "thought", "step": 0, "content": content}
     result = _format_event(event)
     assert result is not None
     assert "[思考]" in result
-    assert "我在思考" in result
+
+
+def test_format_event_thought_plain_text_suppressed():
+    """thought 事件为纯文本时返回 None（避免与 Agent: 重复）。"""
+    event = {"type": "thought", "step": 0, "content": "你好"}
+    result = _format_event(event)
+    assert result is None
 
 
 def test_format_event_action_parsed():
@@ -82,11 +89,11 @@ def test_format_event_action_executed_failure():
 
 
 def test_format_event_task_completed():
-    """task_completed 事件格式化为 [完成] 前缀。"""
+    """task_completed 事件格式化为 Agent: 前缀（最终回复）。"""
     event = {"type": "task_completed", "response": "任务完成结果"}
     result = _format_event(event)
     assert result is not None
-    assert "[完成]" in result
+    assert "Agent:" in result
     assert "任务完成结果" in result
 
 
@@ -120,15 +127,12 @@ def test_format_event_suppressed_types():
     assert _format_event({"type": "step_started", "step": 0}) is None
 
 
-def test_run_single_with_mock(capsys):
-    """单次任务模式：mock LLM 返回纯文本，CLI 输出结果。"""
+def test_run_single_with_mock():
+    """单次任务模式：mock LLM，验证 agent.run 被正确调用。"""
     with patch("src.cli.create_agent") as mock_factory:
-        mock_factory.return_value.run.return_value = "这是一个测试回复"
-        mock_factory.return_value._context = []
-        mock_factory.return_value._initialized = False
+        mock_factory.return_value.run.return_value = "测试回复"
         run_single("测试任务", use_mock=True)
-    captured = capsys.readouterr()
-    assert "这是一个测试回复" in captured.out
+    mock_factory.return_value.run.assert_called_once_with("测试任务")
 
 
 def test_main_single_task(capsys):

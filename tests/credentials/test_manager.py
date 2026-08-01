@@ -36,6 +36,11 @@ def _mock_keyring(monkeypatch):
     monkeypatch.setattr(keyring, "get_password", _get)
     monkeypatch.setattr(keyring, "delete_password", _delete)
 
+    # 阻止 .env 文件加载，确保测试环境隔离
+    from src.credentials import manager as mgr_mod
+
+    monkeypatch.setattr(mgr_mod, "load_dotenv", lambda *a, **kw: None)
+
 
 # --- 钥匙串存储/读取 ---
 

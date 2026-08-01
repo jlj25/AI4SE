@@ -25,7 +25,9 @@ def _format_event(event: dict[str, object]) -> str | None:
         return None
     if etype == "thought":
         content = str(event.get("content", ""))
-        return f"  [思考] {content}"
+        if "tool_code" in content:
+            return f"  [思考] {content}"
+        return None
     if etype == "action_parsed":
         tool = event.get("tool", "")
         args = event.get("args", {})
@@ -53,7 +55,7 @@ def _format_event(event: dict[str, object]) -> str | None:
         return f"  [拦截] {reason}"
     if etype == "task_completed":
         response = str(event.get("response", ""))
-        return f"  [完成] {response}"
+        return f"Agent: {response}"
     if etype == "max_iterations_reached":
         return "  [警告] 达到最大迭代次数"
     if etype == "error":
@@ -106,8 +108,7 @@ def run_interactive(use_mock: bool = False) -> None:
             continue
 
         print()
-        result = agent.run(user_input)
-        print(f"  Agent: {result}")
+        agent.run(user_input)
         print()
 
 
@@ -119,8 +120,7 @@ def run_single(task: str, use_mock: bool = False) -> None:
         else None
     )
     agent = create_agent(llm=llm, on_event=_print_event)
-    result = agent.run(task)
-    print(f"Agent: {result}")
+    agent.run(task)
 
 
 def main(argv: list[str] | None = None) -> int:
