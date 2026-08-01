@@ -11,6 +11,7 @@ from __future__ import annotations
 import sys
 
 from src.agent.factory import create_agent
+from src.llm.base import LLMClient
 from src.llm.mock import MockLLMClient
 
 
@@ -70,7 +71,17 @@ def _print_event(event: dict[str, object]) -> None:
 
 def run_interactive(use_mock: bool = False) -> None:
     """交互式对话模式。"""
-    llm = MockLLMClient(script=[]) if use_mock else None
+    llm: LLMClient | None = (
+        MockLLMClient(
+            script=[
+                "[MockLLM] 模拟回复 1",
+                "[MockLLM] 模拟回复 2",
+                "[MockLLM] 模拟回复 3",
+            ]
+        )
+        if use_mock
+        else None
+    )
     agent = create_agent(llm=llm, on_event=_print_event)
 
     print("NJUSE Coding Agent — 交互模式")
@@ -102,7 +113,11 @@ def run_interactive(use_mock: bool = False) -> None:
 
 def run_single(task: str, use_mock: bool = False) -> None:
     """单次任务模式。"""
-    llm = MockLLMClient(script=[]) if use_mock else None
+    llm: LLMClient | None = (
+        MockLLMClient(script=["[MockLLM] 这是一条模拟回复，用于离线测试 CLI 功能。"])
+        if use_mock
+        else None
+    )
     agent = create_agent(llm=llm, on_event=_print_event)
     result = agent.run(task)
     print(f"Agent: {result}")
