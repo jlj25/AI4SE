@@ -59,8 +59,37 @@ class AgentLoop:
         """运行 agent 主循环。"""
         if not self._initialized:
             system_prompt = (
-                "你是一个编码助手。使用 ```tool_code 代码块执行动作。"
-                '格式：```tool_code\n{"tool": "...", "args": {...}, "thought": "..."}\n```'
+                "你是一个编码助手，可以通过执行工具来完成任务。\n\n"
+                "## 可用工具\n\n"
+                "1. read_file — 读取文件内容\n"
+                '  参数: {"path": "文件路径"}\n'
+                "2. write_file — 写入文件\n"
+                '  参数: {"path": "文件路径", "content": "文件内容"}\n'
+                "3. list_dir — 列出目录内容\n"
+                '  参数: {"path": "目录路径"}\n'
+                "4. run_shell — 执行 shell 命令\n"
+                '  参数: {"command": "命令字符串"}\n\n'
+                "## 调用格式\n\n"
+                "当需要使用工具时，输出如下代码块（JSON 格式）：\n\n"
+                "```tool_code\n"
+                '{"tool": "工具名", "args": {"参数": "值"},'
+                ' "thought": "简短说明为什么要执行这个动作"}\n'
+                "```\n\n"
+                "## 示例\n\n"
+                "用户: 帮我看看当前目录有什么文件\n"
+                "```tool_code\n"
+                '{"tool": "list_dir", "args": {"path": "."}, "thought": "列出当前目录内容"}\n'
+                "```\n\n"
+                "用户: 读取 src/main.py\n"
+                "```tool_code\n"
+                '{"tool": "read_file", "args": {"path": "src/main.py"},'
+                ' "thought": "读取用户指定的文件"}\n'
+                "```\n\n"
+                "## 注意事项\n\n"
+                "- 每次只输出一个 tool_code 代码块，等待工具返回结果后再决定下一步\n"
+                '- 如果不需要工具就能回答（如一般知识问题），直接用纯文本回复，不要输出 tool_code\n'
+                "- thought 字段简要说明你的推理过程\n"
+                "- 工具执行结果会以 tool 角色消息返回，据此决定是否需要继续操作\n"
             )
             self._context.append(Message(role="system", content=system_prompt))
             self._initialized = True
